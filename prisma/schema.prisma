@@ -41,6 +41,7 @@ model User {
   accounts         Account[]
   sessions         Session[]
   decks            Deck[]
+  progress         Progress[]
   createdAt        DateTime @default(now())
 
   @@map("users")
@@ -141,11 +142,26 @@ model Card {
   deck   Deck    @relation(fields: [deckId], references: [id], onDelete: Cascade)
   front  String
   back   String
-  wordId String?
-  word   Word?   @relation(fields: [wordId], references: [id], onDelete: SetNull)
+  wordId   String?
+  word     Word?      @relation(fields: [wordId], references: [id], onDelete: SetNull)
+  progress Progress[]
 
   @@index([deckId])
   @@map("cards")
+}
+
+// Leitner spaced repetition: one row per user+card, box 1–5, next due date.
+model Progress {
+  userId String
+  cardId String
+  box    Int      @default(1)
+  dueAt  DateTime @default(now())
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card   Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@id([userId, cardId])
+  @@index([userId, dueAt])
+  @@map("progress")
 }
 
 model Quiz {

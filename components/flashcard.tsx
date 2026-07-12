@@ -22,12 +22,12 @@ export function Flashcard({ front, back }: { front: string; back: string }) {
       type="button"
       onClick={() => setFlipped((f) => !f)}
       aria-pressed={flipped}
-      className="flex min-h-56 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-gray-300 bg-white p-6 text-center shadow-sm transition active:scale-[0.99]"
+      className="flex min-h-56 w-full flex-col items-center justify-center gap-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-6 text-center shadow-sm transition active:scale-[0.99]"
     >
-      <span className="text-2xl font-semibold">
+      <span className="text-3xl font-bold text-indigo-950">
         {showingBack ? back : front}
       </span>
-      <span className="text-xs uppercase tracking-wide text-gray-400">
+      <span className="text-xs font-medium uppercase tracking-wide text-indigo-400">
         tap to flip
       </span>
     </button>
