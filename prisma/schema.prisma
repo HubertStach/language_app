@@ -16,10 +16,14 @@ enum Role {
 }
 
 model Language {
-  id    String @id @default(cuid())
-  code  String @unique
-  name  String
-  users User[]
+  id      String  @id @default(cuid())
+  code    String  @unique
+  name    String
+  users   User[]
+  words   Word[]
+  tags    Tag[]
+  decks   Deck[]
+  quizzes Quiz[]
 
   @@map("languages")
 }
@@ -36,6 +40,7 @@ model User {
   activeLanguage   Language? @relation(fields: [activeLanguageId], references: [id], onDelete: SetNull)
   accounts         Account[]
   sessions         Session[]
+  decks            Deck[]
   createdAt        DateTime @default(now())
 
   @@map("users")
@@ -76,4 +81,93 @@ model VerificationToken {
 
   @@id([identifier, token])
   @@map("verification_tokens")
+}
+
+// ---- Phase 2: content ----
+
+enum WordType {
+  NOUN
+  VERB
+  ADJECTIVE
+  ADVERB
+  PHRASE
+  OTHER
+}
+
+model Word {
+  id          String   @id @default(cuid())
+  languageId  String
+  language    Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  text        String
+  translation String
+  wordType    WordType @default(OTHER)
+  tags        Tag[]
+  cards       Card[]
+  createdAt   DateTime @default(now())
+
+  @@index([languageId])
+  @@map("words")
+}
+
+model Tag {
+  id         String   @id @default(cuid())
+  languageId String
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  name       String
+  words      Word[]
+
+  @@unique([languageId, name])
+  @@map("tags")
+}
+
+model Deck {
+  id         String   @id @default(cuid())
+  languageId String
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  title      String
+  ownerId    String? // null = official/admin deck
+  owner      User?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  cards      Card[]
+  createdAt  DateTime @default(now())
+
+  @@index([languageId])
+  @@index([ownerId])
+  @@map("decks")
+}
+
+model Card {
+  id     String  @id @default(cuid())
+  deckId String
+  deck   Deck    @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  front  String
+  back   String
+  wordId String?
+  word   Word?   @relation(fields: [wordId], references: [id], onDelete: SetNull)
+
+  @@index([deckId])
+  @@map("cards")
+}
+
+model Quiz {
+  id         String     @id @default(cuid())
+  languageId String
+  language   Language   @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  title      String
+  questions  Question[]
+  createdAt  DateTime   @default(now())
+
+  @@index([languageId])
+  @@map("quizzes")
+}
+
+model Question {
+  id           String @id @default(cuid())
+  quizId       String
+  quiz         Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  prompt       String
+  options      Json
+  correctIndex Int
+
+  @@index([quizId])
+  @@map("questions")
 }

@@ -11,13 +11,10 @@ export default async function Home() {
     where: { id: session.user.id },
     select: { name: true, email: true, activeLanguage: { select: { name: true } } },
   });
+  const isAdmin = session.user.role === "ADMIN";
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold">
-        Hi{user?.name ? `, ${user.name}` : ""} 👋
-      </h1>
-
       <p className="text-gray-600">
         {user?.activeLanguage
           ? `You're learning ${user.activeLanguage.name}.`
@@ -25,6 +22,26 @@ export default async function Home() {
       </p>
 
       <div className="flex flex-col gap-3">
+        <Link
+          href="/decks"
+          className="rounded-lg border border-gray-300 py-2 text-center font-medium"
+        >
+          Study flashcards
+        </Link>
+        <Link
+          href="/words"
+          className="rounded-lg border border-gray-300 py-2 text-center font-medium"
+        >
+          Browse words
+        </Link>
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="rounded-lg border border-gray-300 py-2 text-center font-medium"
+          >
+            Admin
+          </Link>
+        )}
         <Link
           href="/settings"
           className="rounded-lg border border-gray-300 py-2 text-center font-medium"
