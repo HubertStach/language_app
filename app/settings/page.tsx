@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { setActiveLanguage } from "@/lib/actions/settings";
+import { setActiveLanguage, logout } from "@/lib/actions/settings";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -12,13 +11,16 @@ export default async function SettingsPage() {
     prisma.language.findMany({ orderBy: { name: "asc" } }),
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { activeLanguageId: true },
+      select: { activeLanguageId: true, email: true },
     }),
   ]);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <div>
+        <h1 className="text-2xl font-semibold">Profile</h1>
+        {user?.email && <p className="text-sm text-gray-500">{user.email}</p>}
+      </div>
 
       <form action={setActiveLanguage} className="flex flex-col gap-3">
         <label className="text-sm font-medium" htmlFor="languageId">
@@ -47,9 +49,14 @@ export default async function SettingsPage() {
         </button>
       </form>
 
-      <Link href="/" className="text-sm underline">
-        Back home
-      </Link>
+      <form action={logout}>
+        <button
+          type="submit"
+          className="w-full rounded-lg border border-gray-300 py-2 text-center text-sm text-gray-500"
+        >
+          Log out
+        </button>
+      </form>
     </main>
   );
 }
