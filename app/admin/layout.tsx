@@ -15,6 +15,7 @@ export default async function AdminLayout({
         <Link href="/admin/tags">Tags</Link>
         <Link href="/admin/decks">Decks</Link>
         <Link href="/admin/quizzes">Quizzes</Link>
+        <Link href="/admin/feeds">Feeds</Link>
         <Link href="/" className="ml-auto text-gray-500">
           Exit
         </Link>

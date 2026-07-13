@@ -115,26 +115,6 @@ export async function importWordsFromCsv(
   return { imported, skipped, errors };
 }
 
-/**
- * Build decks/cards for words that already exist in the DB (e.g. imported
- * before flashcards were auto-created). Safe to run repeatedly.
- */
-export async function backfillFlashcards() {
-  const deckCache = new Map<string, string>();
-  const words = await prisma.word.findMany({
-    include: { tags: { select: { name: true } } },
-  });
-  let created = 0;
-  for (const w of words) {
-    const titles = w.tags.length > 0 ? w.tags.map((t) => t.name) : [UNCATEGORIZED_DECK];
-    for (const title of titles) {
-      const deckId = await ensureDeck(w.languageId, title, deckCache);
-      if (await ensureCard(deckId, w)) created++;
-    }
-  }
-  return { words: words.length, cardsCreated: created };
-}
-
 function splitTags(cell: string) {
   return cell
     .split(";")

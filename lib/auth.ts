@@ -39,15 +39,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: "/login" },
   providers,
   callbacks: {
-    // Carry role + activeLanguageId on the token so pages/actions can gate without a DB hit.
+    // Carry role on the token so pages/actions can gate without a DB hit.
     async jwt({ token, user }) {
       if (user?.id) {
         const db = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { role: true, activeLanguageId: true },
+          select: { role: true },
         });
         token.role = db?.role ?? "USER";
-        token.activeLanguageId = db?.activeLanguageId ?? null;
       }
       return token;
     },
@@ -55,7 +54,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.sub!;
         session.user.role = token.role;
-        session.user.activeLanguageId = token.activeLanguageId;
       }
       return session;
     },

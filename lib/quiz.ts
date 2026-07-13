@@ -6,7 +6,7 @@ export type Question = { prompt: string; options: string[]; correctIndex: number
 export const QUESTION_COUNT = 20;
 const OPTION_COUNT = 4;
 
-function shuffle<T>(a: T[], rng: () => number): T[] {
+export function shuffle<T>(a: T[], rng: () => number = Math.random): T[] {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];

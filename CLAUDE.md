@@ -2,50 +2,61 @@
 
 # Language Learning App
 
-Mobile-first webapp for learning a language: flashcards (official + user-created), quizzes (admin-created), and a browsable word repository. Real users, real auth.
+Mobile-first webapp for learning a language: flashcards, quizzes, a browsable word/sentence repository, and a news feed in the target language. Real users, real auth.
+
+**Focus: Spanish only for now.** The schema is multi-language (`activeLanguageId` filters all content), and es/fr/de/it are seeded, but content and testing target Spanish. Don't build per-language special cases.
 
 ## Stack
 
-- **Next.js 16.2 App Router** — see AGENTS.md warning: read `node_modules/next/dist/docs/` before coding. Middleware is renamed `proxy.ts` in this version.
-- **PostgreSQL** (Docker locally, RDS-compatible) + **Prisma** for schema/migrations.
-- **Auth.js (NextAuth v5)** — email/password (bcrypt) + Google. `role` field gates admin.
+- **Next.js 16.2 App Router** — see AGENTS.md warning: read `node_modules/next/dist/docs/` before coding. Middleware is renamed `proxy.ts`. `cacheComponents` is NOT enabled — use the previous caching model (`next: { revalidate }` on fetch).
+- **PostgreSQL** (Docker locally) + **Prisma**; generated client lives in `app/generated/prisma`.
+- **Auth.js (NextAuth v5)** — email/password (bcrypt) + optional Google. JWT session carries `id` + `role` only; active language is always read fresh from the DB (`lib/guards.ts`).
 - **Zod** on every Server Action input.
-- **Tailwind 4**, mobile-first (design at 375 px, desktop = wider margins). Bottom tab nav: Learn / Words / Quizzes / Profile.
+- **Tailwind 4**, mobile-first (375 px). Bottom tab nav: Home (feed) / Learn / Words / Quizzes / Profile (`components/bottom-nav.tsx`).
 
 ## Data model
 
 ```
 User        id, email, passwordHash?, name, role (USER | ADMIN), activeLanguageId
 Language    id, code, name
-Word        id, languageId, text, translation, wordType (NOUN | VERB | ADJECTIVE | ...)
+Word        id, languageId, text, translation, wordType, kind (WORD | SENTENCE)
 Tag         id, languageId, name              — Word ↔ Tag many-to-many
 Deck        id, languageId, title, ownerId    — ownerId null = official/admin deck
-Card        id, deckId, front, back, wordId?  — admin cards link a Word; user cards freeform
-Quiz        id, languageId, title             — admin-created only
-Question    id, quizId, prompt, options (json), correctIndex
-Progress    userId+cardId, box (1–5), dueAt   — Leitner spaced repetition
-QuizResult  userId, quizId, score, takenAt
+Card        id, deckId, front, back, wordId?
+Progress    userId+cardId, box (1–5), dueAt   — Leitner (lib/leitner.ts)
+Quiz/Question                                 — admin-authored (player not built)
+FeedSource  id, languageId, name, url         — RSS 2.0 feeds for the Home tab
 ```
 
-`activeLanguageId` = the language the user is learning (changeable in settings); all content queries filter by it.
+Sentences are NOT a separate model — a `Word` with `kind = SENTENCE`. All word machinery (cards, decks, import, quizzes, flashcards) is shared; pages filter by `kind`.
+
+## Key flows
+
+- **Import**: admin uploads CSV (`content, language, meaning, tag`) → words + tags + one official deck per tag + linked cards (`lib/import-words.ts`). Idempotent; a word/sentence toggle on the form.
+- **Translations**: `;` in a translation = multiple senses; `normalizeSenses` (`lib/text.ts`) rewrites to `, ` at every write boundary (import, admin CRUD). Flashcard render also applies it for legacy rows.
+- **Study**: `StudySession` (`components/study-session.tsx`) covers both deck study (`persist` → Leitner via `reviewCard`) and throwaway random sets (`/random`, score only). Cards show the word first; tap flips to the translation.
+- **Quizzes**: `/quizzes/random` generates 20 multiple-choice questions from words (`?kind=SENTENCE` for sentences) via `lib/quiz.ts` — correct translation + 3 distractors of the same kind. Client-side score only; admin-authored Quiz/Question have no player yet.
+- **Feed**: Home tab shows Wikipedia daily featured content (automatic per language code) + admin-managed RSS sources (`lib/feed.ts`, `lib/rss.ts`, `/admin/feeds`). No scraping, no cron — fetch cache with `revalidate: 1800`, `Promise.allSettled` tolerates dead feeds. External text is stripped to plain text — never render feed HTML.
 
 ## Conventions
 
 - Reads: Server Components query Prisma directly. Writes: Server Actions. No `/api` routes unless an external consumer needs one.
-- Authorization is enforced in every Server Action / page (ownership check on mutations, admin check server-side). `proxy.ts` does only optimistic redirects — it is not the auth layer.
-- Enforce integrity with DB constraints (unique, FK cascades), not app code.
+- Authorization in every page/action (ownership check on mutations, admin check server-side). `proxy.ts` does only optimistic redirects — not the auth layer.
+- Integrity via DB constraints (unique, FK cascades), not app code.
 - UI language is English; only learning content is multilingual — no i18n framework.
-- Spaced repetition is Leitner (box int + dueAt date), not SM-2.
-- One Prisma migration per phase; keep the seed script (languages + admin user) working.
+- Non-trivial pure logic gets a `lib/*.check.ts` self-check (assert-based, run with `npx tsx lib/<name>.check.ts`) — see leitner/quiz/rss/csv/text.
+- One Prisma migration per change-set; keep `prisma/seed.ts` working (languages + admin user + feed sources).
 
-## Build phases
+## Status / what's left
 
-1. **Foundation** — Postgres + Prisma schema + seed; Auth.js signup/login; `proxy.ts` redirects; language picker + settings.
-2. **Words + admin** — `/words` browse/search/filter; `/admin` role-gated CRUD (words, tags, decks, quizzes).
-3. **Flashcards** — official + user decks; study screen (flip card, knew-it/didn't → Leitner update, due cards first).
-4. **Quizzes** — multiple-choice player, results, simple dashboard (streak, due today).
-5. **Hardening** — rate limiting on auth, password reset email, error pages, Playwright smoke test (auth + study flows).
+Done: foundation (auth, languages, settings), words + admin CRUD + CSV import, flashcards (Leitner decks + random sets), sentences, random word/sentence quizzes, Home feed.
+
+Not built yet:
+- **Quiz persistence** — no `QuizResult` model; scores are client-only. No player for admin-authored quizzes. No dashboard (streak, due today).
+- **Hardening** — rate limiting on auth, password reset email, error pages, Playwright smoke test (auth + study flows).
 
 ## Commands
 
 - `npm run dev` / `npm run build` / `npm run lint`
+- `npx prisma migrate dev` / `npx prisma db seed` (admin@example.com / admin1234)
+- `docker compose up -d` — local Postgres (must be running; `ECONNREFUSED` means it isn't)

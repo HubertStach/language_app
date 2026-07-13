@@ -52,7 +52,7 @@ export default async function StudyDeckPage({
         ← Decks
       </Link>
       <h1 className="text-2xl font-semibold">{deck.title}</h1>
-      <StudySession cards={cards} />
+      <StudySession cards={cards} persist />
     </main>
   );
 }

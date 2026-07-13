@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireActiveLanguage } from "@/lib/guards";
 import { prisma } from "@/lib/db";
-import { RandomSession } from "@/components/random-session";
+import { shuffle } from "@/lib/quiz";
+import { StudySession } from "@/components/study-session";
 
 export const dynamic = "force-dynamic"; // re-shuffle on every visit
 
@@ -27,12 +28,8 @@ export default async function RandomPage({
     select: { id: true, front: true, back: true },
   });
 
-  // Shuffle (Fisher-Yates) and take up to LIMIT — distinct rows, so no repeats.
-  for (let j = cards.length - 1; j > 0; j--) {
-    const k = Math.floor(Math.random() * (j + 1));
-    [cards[j], cards[k]] = [cards[k], cards[j]];
-  }
-  const picked = cards.slice(0, LIMIT);
+  // Distinct rows shuffled, so no repeats.
+  const picked = shuffle(cards).slice(0, LIMIT);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full min-w-0 max-w-sm flex-col gap-6 p-6">
@@ -42,7 +39,7 @@ export default async function RandomPage({
       <h1 className="text-2xl font-semibold">
         Random {isSentence ? "sentences" : "flashcards"}
       </h1>
-      <RandomSession cards={picked} />
+      <StudySession cards={picked} />
     </main>
   );
 }

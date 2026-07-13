@@ -16,16 +16,29 @@ enum Role {
 }
 
 model Language {
-  id      String  @id @default(cuid())
-  code    String  @unique
-  name    String
-  users   User[]
-  words   Word[]
-  tags    Tag[]
-  decks   Deck[]
-  quizzes Quiz[]
+  id          String       @id @default(cuid())
+  code        String       @unique
+  name        String
+  users       User[]
+  words       Word[]
+  tags        Tag[]
+  decks       Deck[]
+  quizzes     Quiz[]
+  feedSources FeedSource[]
 
   @@map("languages")
+}
+
+// An RSS feed shown on the Home tab for learners of this language.
+model FeedSource {
+  id         String   @id @default(cuid())
+  languageId String
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  name       String
+  url        String // RSS 2.0 feed URL
+
+  @@unique([languageId, url])
+  @@map("feed_sources")
 }
 
 model User {

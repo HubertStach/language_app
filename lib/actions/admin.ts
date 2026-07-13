@@ -121,6 +121,27 @@ export async function deleteTag(formData: FormData) {
   revalidatePath("/admin/tags");
 }
 
+// ---- Feed sources ----
+
+export async function createFeedSource(formData: FormData) {
+  const { languageId } = await requireAdminLanguage();
+  const name = nonEmpty.parse(formData.get("name"));
+  const url = z.string().trim().url().parse(formData.get("url"));
+  // Unique per language+url enforced by DB; ignore duplicates.
+  await prisma.feedSource.upsert({
+    where: { languageId_url: { languageId, url } },
+    update: { name },
+    create: { languageId, name, url },
+  });
+  revalidatePath("/admin/feeds");
+}
+
+export async function deleteFeedSource(formData: FormData) {
+  await requireAdmin();
+  await prisma.feedSource.delete({ where: { id: id.parse(formData.get("id")) } });
+  revalidatePath("/admin/feeds");
+}
+
 // ---- Decks + cards ----
 
 export async function createDeck(formData: FormData) {
