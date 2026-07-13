@@ -32,7 +32,7 @@ export function FeedCard({ source, title, snippet, url, imageUrl, dateLabel }: P
           <img
             src={imageUrl}
             alt=""
-            className={`w-full rounded-lg object-cover ${expanded ? "" : "max-h-48"}`}
+            className="max-h-48 w-full rounded-lg object-cover"
             loading="lazy"
           />
         )}
