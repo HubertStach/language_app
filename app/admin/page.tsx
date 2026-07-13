@@ -5,6 +5,7 @@ const SECTIONS = [
   ["Tags", "/admin/tags"],
   ["Decks", "/admin/decks"],
   ["Quizzes", "/admin/quizzes"],
+  ["Feeds", "/admin/feeds"],
 ] as const;
 
 export default function AdminHome() {
