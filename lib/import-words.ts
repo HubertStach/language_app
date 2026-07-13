@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { parseCsv } from "@/lib/csv";
+import { normalizeSenses } from "@/lib/text";
+import { WordKind } from "@/app/generated/prisma/enums";
 
 export type ImportResult =
   | { error: string }
@@ -31,7 +33,10 @@ type WordCard = { id: string; text: string; translation: string };
  * Idempotent: re-importing skips existing words but still ensures their tags,
  * decks and cards exist — so a re-import backfills any missing flashcards.
  */
-export async function importWordsFromCsv(csvText: string): Promise<ImportResult> {
+export async function importWordsFromCsv(
+  csvText: string,
+  kind: WordKind = "WORD",
+): Promise<ImportResult> {
   const rows = parseCsv(csvText).filter((r) => r.some((c) => c.trim() !== ""));
   if (rows.length < 2) return { error: "CSV has no data rows" };
 
@@ -63,7 +68,7 @@ export async function importWordsFromCsv(csvText: string): Promise<ImportResult>
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r];
     const content = (row[ci] ?? "").trim();
-    const meaning = (row[mi] ?? "").trim();
+    const meaning = normalizeSenses((row[mi] ?? "").trim());
     const langKey = (row[li] ?? "").trim().toLowerCase();
 
     if (!content || !meaning || !langKey) {
@@ -82,7 +87,7 @@ export async function importWordsFromCsv(csvText: string): Promise<ImportResult>
 
     // Find-or-create the word so re-import is idempotent.
     let word = await prisma.word.findFirst({
-      where: { languageId, text: content, translation: meaning },
+      where: { languageId, text: content, translation: meaning, kind },
     });
     if (word) {
       skipped++;
@@ -94,7 +99,7 @@ export async function importWordsFromCsv(csvText: string): Promise<ImportResult>
       }
     } else {
       word = await prisma.word.create({
-        data: { languageId, text: content, translation: meaning, tags: connectTags },
+        data: { languageId, text: content, translation: meaning, kind, tags: connectTags },
       });
       imported++;
     }

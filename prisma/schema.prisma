@@ -95,6 +95,13 @@ enum WordType {
   OTHER
 }
 
+// A Word row is either a single word or a full sentence/phrase. Same shape,
+// so it reuses the Word model, cards, decks, import, quizzes and flashcards.
+enum WordKind {
+  WORD
+  SENTENCE
+}
+
 model Word {
   id          String   @id @default(cuid())
   languageId  String
@@ -102,6 +109,7 @@ model Word {
   text        String
   translation String
   wordType    WordType @default(OTHER)
+  kind        WordKind @default(WORD)
   tags        Tag[]
   cards       Card[]
   createdAt   DateTime @default(now())

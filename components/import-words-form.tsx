@@ -16,6 +16,14 @@ export function ImportWordsForm() {
         matches a code or name (e.g. <code>es</code> or <code>Spanish</code>).
         Multiple tags separated by <code>;</code>. Missing tags are created.
       </p>
+      <select
+        name="kind"
+        defaultValue="WORD"
+        className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+      >
+        <option value="WORD">Import as words</option>
+        <option value="SENTENCE">Import as sentences</option>
+      </select>
       <input
         type="file"
         name="file"

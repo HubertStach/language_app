@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAdmin, requireAdminLanguage } from "@/lib/guards";
-import { WordType } from "@/app/generated/prisma/enums";
+import { WordType, WordKind } from "@/app/generated/prisma/enums";
 import { importWordsFromCsv } from "@/lib/import-words";
+import { normalizeSenses } from "@/lib/text";
 
 const id = z.string().min(1);
 const nonEmpty = z.string().trim().min(1);
@@ -14,8 +15,9 @@ const nonEmpty = z.string().trim().min(1);
 
 const wordSchema = z.object({
   text: nonEmpty,
-  translation: nonEmpty,
+  translation: nonEmpty.transform(normalizeSenses),
   wordType: z.enum(WordType),
+  kind: z.enum(WordKind).default("WORD"),
   tagIds: z.array(id),
 });
 
@@ -24,6 +26,7 @@ function parseWord(formData: FormData) {
     text: formData.get("text"),
     translation: formData.get("translation"),
     wordType: formData.get("wordType"),
+    kind: formData.get("kind") ?? undefined,
     tagIds: formData.getAll("tagIds"),
   });
 }
@@ -37,6 +40,7 @@ export async function createWord(formData: FormData) {
       text: data.text,
       translation: data.translation,
       wordType: data.wordType,
+      kind: data.kind,
       tags: { connect: data.tagIds.map((tagId) => ({ id: tagId })) },
     },
   });
@@ -53,6 +57,7 @@ export async function updateWord(formData: FormData) {
       text: data.text,
       translation: data.translation,
       wordType: data.wordType,
+      kind: data.kind,
       tags: { set: data.tagIds.map((tagId) => ({ id: tagId })) },
     },
   });
@@ -86,7 +91,8 @@ export async function importWords(
     return { error: "Choose a .csv file" };
   }
 
-  const res = await importWordsFromCsv(await file.text());
+  const kind: WordKind = formData.get("kind") === "SENTENCE" ? "SENTENCE" : "WORD";
+  const res = await importWordsFromCsv(await file.text(), kind);
   if ("error" in res) return { error: res.error };
 
   revalidatePath("/admin/words");

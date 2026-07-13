@@ -1,4 +1,4 @@
-import { WordType } from "@/app/generated/prisma/enums";
+import { WordType, WordKind } from "@/app/generated/prisma/enums";
 
 const WORD_TYPES = Object.values(WordType);
 
@@ -11,6 +11,7 @@ type Props = {
     text: string;
     translation: string;
     wordType: WordType;
+    kind: WordKind;
     tags: { id: string }[];
   };
 };
@@ -35,17 +36,27 @@ export function WordForm({ action, tags, submitLabel, word }: Props) {
         placeholder="Translation"
         className="rounded-lg border border-gray-300 px-3 py-2"
       />
-      <select
-        name="wordType"
-        defaultValue={word?.wordType ?? "OTHER"}
-        className="rounded-lg border border-gray-300 px-3 py-2"
-      >
-        {WORD_TYPES.map((t) => (
-          <option key={t} value={t}>
-            {t.toLowerCase()}
-          </option>
-        ))}
-      </select>
+      <div className="flex gap-2">
+        <select
+          name="kind"
+          defaultValue={word?.kind ?? "WORD"}
+          className="flex-1 rounded-lg border border-gray-300 px-3 py-2"
+        >
+          <option value="WORD">word</option>
+          <option value="SENTENCE">sentence</option>
+        </select>
+        <select
+          name="wordType"
+          defaultValue={word?.wordType ?? "OTHER"}
+          className="flex-1 rounded-lg border border-gray-300 px-3 py-2"
+        >
+          {WORD_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t.toLowerCase()}
+            </option>
+          ))}
+        </select>
+      </div>
       {tags.length > 0 && (
         <fieldset className="flex flex-wrap gap-2 rounded-lg border border-gray-200 p-2">
           {tags.map((t) => (

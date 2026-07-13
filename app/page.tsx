@@ -34,6 +34,13 @@ export default async function Home() {
         Random flashcards
       </Link>
 
+      <Link
+        href="/random?kind=SENTENCE"
+        className="rounded-lg border border-gray-300 py-3 text-center font-medium"
+      >
+        Random sentences
+      </Link>
+
       {isAdmin && (
         <Link
           href="/admin"
