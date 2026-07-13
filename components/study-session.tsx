@@ -46,11 +46,11 @@ export function StudySession({ cards }: { cards: Card[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       <p className="text-center text-sm text-gray-500">
         {i + 1} / {cards.length}
       </p>
-      {/* key remounts the card so its starting side re-randomises. */}
+      {/* key remounts the card so it resets to the word side (unflipped). */}
       <Flashcard key={card.id} front={card.front} back={card.back} />
       <div className="flex gap-3">
         <button

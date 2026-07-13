@@ -47,7 +47,7 @@ export default async function StudyDeckPage({
     .map(({ id, front, back }) => ({ id, front, back }));
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh w-full min-w-0 max-w-sm flex-col gap-6 p-6">
       <Link href="/decks" className="text-sm text-gray-500 underline">
         ← Decks
       </Link>
