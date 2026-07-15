@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireActiveLanguage } from "@/lib/guards";
 import { getFeed } from "@/lib/feed";
-import { FeedCard } from "@/components/feed-card";
+import { FeedList } from "@/components/feed-list";
 
 export const dynamic = "force-dynamic"; // per-user language; upstream fetches are cached
 
@@ -33,20 +33,16 @@ export default async function HomePage() {
         </p>
       )}
 
-      <ul className="flex flex-col gap-3">
-        {items.map((item) => (
-          <li key={item.url + item.source}>
-            <FeedCard
-              source={item.source}
-              title={item.title}
-              snippet={item.snippet}
-              url={item.url}
-              imageUrl={item.imageUrl}
-              dateLabel={relativeDate(item.publishedAt)}
-            />
-          </li>
-        ))}
-      </ul>
+      <FeedList
+        items={items.map((item) => ({
+          source: item.source,
+          title: item.title,
+          snippet: item.snippet,
+          url: item.url,
+          imageUrl: item.imageUrl,
+          dateLabel: relativeDate(item.publishedAt),
+        }))}
+      />
     </main>
   );
 }

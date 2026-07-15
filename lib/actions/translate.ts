@@ -27,7 +27,7 @@ export async function translateFeedItem(input: {
       Authorization: `DeepL-Auth-Key ${key}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text: [title, snippet], target_lang: "EN" }),
+    body: JSON.stringify({ text: [title, snippet], target_lang: "PL" }),
     // ponytail: no server-side cache — DeepL free tier (500k chars/month) is
     // plenty for personal use; cache by item URL if quota ever runs out.
   });

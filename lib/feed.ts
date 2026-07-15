@@ -88,8 +88,14 @@ export async function getFeed(languageCode: string, sources: RssSource[]): Promi
     ...sources.map(fetchRssSource),
   ]);
   const items = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
-  // Newest first; undated (Wikipedia daily) items lead. Finite sentinel — an
-  // Infinity-Infinity comparator would return NaN (unspecified sort order).
-  const ts = (i: FeedItem) => i.publishedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-  return items.sort((a, b) => ts(b) - ts(a));
+  // Dated items newest first; undated (Wikipedia daily) items are spread into
+  // random slots instead of clumping at the top. Page is force-dynamic, so the
+  // order reshuffles per visit — fine for a daily-discovery feed.
+  const feed = items
+    .filter((i) => i.publishedAt)
+    .sort((a, b) => b.publishedAt!.getTime() - a.publishedAt!.getTime());
+  for (const item of items.filter((i) => !i.publishedAt)) {
+    feed.splice(Math.floor(Math.random() * (feed.length + 1)), 0, item);
+  }
+  return feed;
 }

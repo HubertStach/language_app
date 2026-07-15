@@ -67,7 +67,13 @@ export function StudySession({
         </span>
       </div>
       {/* key remounts the card so it resets to the word side (unflipped). */}
-      <Flashcard key={card.id} front={card.front} back={card.back} />
+      <Flashcard
+        key={card.id}
+        front={card.front}
+        back={card.back}
+        disabled={pending}
+        onSwipe={(decision) => rate(decision)}
+      />
       <div className="flex gap-3">
         <button
           type="button"
