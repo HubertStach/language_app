@@ -36,7 +36,7 @@ Sentences are NOT a separate model — a `Word` with `kind = SENTENCE`. All word
 - **Translations**: `;` in a translation = multiple senses; `normalizeSenses` (`lib/text.ts`) rewrites to `, ` at every write boundary (import, admin CRUD). Flashcard render also applies it for legacy rows.
 - **Study**: `StudySession` (`components/study-session.tsx`) covers both deck study (`persist` → Leitner via `reviewCard`) and throwaway random sets (`/random`, score only). Cards show the word first; tap flips to the translation.
 - **Quizzes**: `/quizzes/random` generates 20 multiple-choice questions from words (`?kind=SENTENCE` for sentences) via `lib/quiz.ts` — correct translation + 3 distractors of the same kind. Client-side score only; admin-authored Quiz/Question have no player yet.
-- **Feed**: Home tab shows Wikipedia daily featured content (automatic per language code) + admin-managed RSS sources (`lib/feed.ts`, `lib/rss.ts`, `/admin/feeds`). No scraping, no cron — fetch cache with `revalidate: 1800`, `Promise.allSettled` tolerates dead feeds. External text is stripped to plain text — never render feed HTML.
+- **Feed**: Home tab shows Wikipedia daily featured content (automatic per language code) + admin-managed RSS sources (`lib/feed.ts`, `lib/rss.ts`, `/admin/feeds`). No scraping, no cron — fetch cache with `revalidate: 1800`, `Promise.allSettled` tolerates dead feeds. Parser prefers `content:encoded` (full body, capped ~1200 chars) over `description`. External text is stripped to plain text — never render feed HTML. Cards tap-to-expand the text (`components/feed-card.tsx`); image stays fixed height.
 
 ## Conventions
 
@@ -54,6 +54,12 @@ Done: foundation (auth, languages, settings), words + admin CRUD + CSV import, f
 Not built yet:
 - **Quiz persistence** — no `QuizResult` model; scores are client-only. No player for admin-authored quizzes. No dashboard (streak, due today).
 - **Hardening** — rate limiting on auth, password reset email, error pages, Playwright smoke test (auth + study flows).
+
+## Deployment (Vercel)
+
+- Build command (`vercel.json`): `prisma generate && prisma migrate deploy && next build` — **migrations auto-apply to prod on every deploy** (idempotent, never resets).
+- **Seed data does NOT run on prod.** Languages/admin were seeded once; new seed rows (e.g. feed sources) don't propagate. Add feeds on prod via **/admin/feeds** (admin-managed by design — don't re-seed on deploy, it would resurrect deleted feeds).
+- Prod `DATABASE_URL` may be marked "Sensitive" in Vercel (unreadable), so seeding prod from a laptop isn't always possible — the admin UI is the intended path.
 
 ## Commands
 
