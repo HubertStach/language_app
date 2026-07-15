@@ -43,3 +43,5 @@ next-env.d.ts
 /app/generated/prisma
 
 run.txt
+spanish-top-1000.csv
+spanish-sentences-100.csv
